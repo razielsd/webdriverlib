@@ -4,7 +4,11 @@
  * Modify Web_DriverTest::setUpBeforeClass
  */
 
-class Web_DriverTest extends Testing_TestCase
+require_once (__DIR__ . '/../../WebDriver/WebDriver.php');
+
+date_default_timezone_set('Europe/Moscow');
+
+class Web_DriverTest extends PHPUnit_Framework_TestCase
 {
 
     /**
