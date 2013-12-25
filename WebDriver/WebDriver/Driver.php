@@ -20,7 +20,6 @@ class WebDriver_Driver
         $this->host = $host;
         $this->port = $port;
         $this->serverUrl = 'http://' . $this->host . ':' . $this->port . '/wd/hub/';
-        //$this->serverUrl = 'http://test.dev/proxy/afateev/selenium/wd/hub/';
         if (!$sessionId) {
             $result = $this->curl(
                 $this->factoryCommand(
