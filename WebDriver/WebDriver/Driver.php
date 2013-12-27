@@ -13,6 +13,7 @@ class WebDriver_Driver
     protected $sessionId = null;
     protected $serverUrl = null;
     protected $isCloseSession = true;
+    protected $isDebug = false;
 
 
     public function __construct($host, $port=4444, $sessionId=null)
@@ -59,7 +60,7 @@ class WebDriver_Driver
     public function curl(WebDriver_Command $command)
     {
         $url = $command->getUrl();
-
+        $this->writeLog('URL: ' . $url);
         $ch = curl_init($url);
         curl_setopt($ch, CURLOPT_TIMEOUT, $this->seleniumServerRequestsTimeout);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
@@ -71,7 +72,9 @@ class WebDriver_Driver
             ));
 
         $method = $command->getMethod();
+        $this->writeLog('Request method: ' . $method);
         $params = $command->getParameters();
+        $this->writeLog('Params: ' . var_export($params, true));
         if ($method === WebDriver_Command::METHOD_POST) {
             curl_setopt($ch, CURLOPT_POST, TRUE);
             if ($params && is_array($params)) {
@@ -155,6 +158,13 @@ class WebDriver_Driver
     }
 
 
+    protected function writeLog($logTxt)
+    {
+        if ($this->isDebug) {
+            echo "{$logTxt}\n";
+        }
+
+    }
 
 
 }

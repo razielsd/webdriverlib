@@ -84,7 +84,6 @@ class WebDriver
                     WebDriver_Command::METHOD_GET
                 )
             );
-
             return $result['value'];
         }
     }
@@ -117,9 +116,10 @@ class WebDriver
     public function execute($js, $args=[])
     {
         $params = ['script' => $js, 'args' => $args];
-        $this->driver->curl(
+        $result = $this->driver->curl(
             $this->driver->factoryCommand('execute', WebDriver_Command::METHOD_POST, $params)
         );
+        return $result['value'];
     }
 
 

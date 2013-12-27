@@ -79,7 +79,6 @@ class Web_DriverTest extends PHPUnit_Framework_TestCase
         $locator = "xpath=//div[@id='e_draggable']";
         $drag = self::$driver->find($locator);
         $beforeLoc = $drag->location();
-        $drag->buttonDown(WebDriver::BUTTON_LEFT);
         $shift = ['x' => 50, 'y' => 30];
         $drag->dragAndDrop($shift['x'], $shift['y']);
         $afterLoc = $drag->location();

@@ -110,14 +110,16 @@ class WebDriver_Element
      * @param int $yoffset
      * @return WebDriver_Element
      */
-    public function moveto($xoffset, $yoffset, WebDriver_Element $element=null)
+    public function moveto($xoffset=null, $yoffset=null, WebDriver_Element $element=null)
     {
         $element = ($element)?$element:$this;
         $params = [
-            'element' => "{$element->getElementId()}",
-            'xoffset' => intval($xoffset),
-            'yoffset' => intval($yoffset)
+            'element' => "{$element->getElementId()}"
         ];
+        if ($xoffset !== null) {
+            $params['xoffset'] = intval($xoffset);
+            $params['yoffset'] = intval($yoffset);
+        }
         $this->sendCommand('moveto', WebDriver_Command::METHOD_POST, $params);
         return $this;
     }
@@ -130,7 +132,7 @@ class WebDriver_Element
     public function buttonDown($btn)
     {
         $size = $this->size();
-        $this->moveto(ceil($size['width']/2), ceil($size['height']/2));
+        $this->moveto();
         $this->webDriver->buttonDown($btn);
         $this->state['buttonDown'] = $btn;
         return $this;
@@ -197,7 +199,7 @@ class WebDriver_Element
             switch ($tagName) {
                 case 'input':
                 case 'textarea':
-                    $params = ['value' => [$value]];
+                    $params = ['value' => ["{$value}"]];
                     $this->sendCommand('element/:id/value', WebDriver_Command::METHOD_POST, $params);
                     break;
                 case 'select':
