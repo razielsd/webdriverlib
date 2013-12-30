@@ -5,12 +5,15 @@ require_once __DIR__ . '/WebDriver/Command.php';
 require_once __DIR__ . '/WebDriver/Exception.php';
 require_once __DIR__ . '/WebDriver/NoSeleniumException.php';
 require_once __DIR__ . '/WebDriver/Object.php';
+require_once __DIR__ . '/WebDriver/Object/Alert.php';
+require_once __DIR__ . '/WebDriver/Object/Timeout.php';
+require_once __DIR__ . '/WebDriver/Object/Cookie.php';
 require_once __DIR__ . '/WebDriver/Element.php';
+
 
 /**
  * Class WebDriver
  */
-
 class WebDriver
 {
 
@@ -71,6 +74,36 @@ class WebDriver
     }
 
 
+    /**
+     * @return WebDriver_Object_Alert
+     */
+    public function alert()
+    {
+        if (!isset($this->objectList['alert'])) {
+            $this->objectList['alert'] = new WebDriver_Object_Alert($this->driver);
+        }
+        return $this->objectList['alert'];
+    }
+
+
+    /**
+     * @return WebDriver_Object_Cookie
+     */
+    public function cookie()
+    {
+        if (!isset($this->objectList['cookie'])) {
+            $this->objectList['cookie'] = new WebDriver_Object_Cookie($this->driver);
+        }
+        return $this->objectList['cookie'];
+    }
+
+
+    /**
+     * Retrieve/Navigate the URL of the current page.
+     *
+     * @param null $url
+     * @return mixed
+     */
     public function url($url=null)
     {
         if ($url) {
@@ -89,6 +122,9 @@ class WebDriver
     }
 
 
+    /**
+     * Navigate forwards in the browser history, if possible.
+     */
     public function forward()
     {
         $this->driver->curl(
@@ -97,6 +133,9 @@ class WebDriver
     }
 
 
+    /**
+     * Navigate backwards in the browser history, if possible.
+     */
     public function back()
     {
         $this->driver->curl(
@@ -105,6 +144,9 @@ class WebDriver
     }
 
 
+    /**
+     * Refresh the current page.
+     */
     public function refresh()
     {
         $this->driver->curl(
@@ -113,6 +155,13 @@ class WebDriver
     }
 
 
+    /**
+     * Inject a snippet of JavaScript into the page for execution in the context of the currently selected frame
+     *
+     * @param string $js
+     * @param array $args
+     * @return mixed
+     */
     public function execute($js, $args=[])
     {
         $params = ['script' => $js, 'args' => $args];
@@ -126,12 +175,18 @@ class WebDriver
     public function executeAsync($js, $args=[])
     {
         $params = ['script' => $js, 'args' => $args];
-        $this->driver->curl(
+        $result = $this->driver->curl(
             $this->driver->factoryCommand('execute_async', WebDriver_Command::METHOD_POST, $params)
         );
+        return $result['value'];
     }
 
 
+    /**
+     * Save screenshot of the current page to file $filename
+     *
+     * @param $filename
+     */
     public function screenshot($filename)
     {
         $image = $this->driver->curl(
@@ -143,6 +198,8 @@ class WebDriver
 
 
     /**
+     * Get page element using locator
+     *
      * @param $locator
      * @return WebDriver_Element
      */
@@ -152,20 +209,54 @@ class WebDriver
     }
 
 
+    /**
+     * Click and hold the left mouse button (at the coordinates set by the last moveto command).
+     *
+     * @param $btn - const WebDriver::BUTTON_*
+     */
     public function buttonDown($btn)
     {
         $command = $this->driver->factoryCommand('buttondown', WebDriver_Command::METHOD_POST, ['button' => $btn]);
         $this->driver->curl($command);
-        return $this;
-
     }
 
 
+    /**
+     * Releases the mouse button previously held (where the mouse is currently at).
+     * Must be called once for every buttondown command issued.
+     *
+     * @param $btn
+     */
     public function buttonUp($btn)
     {
         $command = $this->driver->factoryCommand('buttonup', WebDriver_Command::METHOD_POST, ['button' => $btn]);
         $this->driver->curl($command);
-        return $this;
+    }
+
+
+    /**
+     * Get the current page source.
+     *
+     * @return string
+     */
+    public function source()
+    {
+        $command = $this->driver->factoryCommand('source', WebDriver_Command::METHOD_GET);
+        $result = $this->driver->curl($command);
+        return $result['value'];
+    }
+
+
+    /**
+     * Get the current page title.
+     *
+     * @return string
+     */
+    public function title()
+    {
+        $command = $this->driver->factoryCommand('title', WebDriver_Command::METHOD_GET);
+        $result = $this->driver->curl($command);
+        return $result['value'];
     }
 
 }

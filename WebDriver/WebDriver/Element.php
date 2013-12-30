@@ -301,13 +301,9 @@ class WebDriver_Element
 
     public function size()
     {
-        //if ($this->state['size'] === null) {
-            $result = $this->sendCommand('element/:id/size', WebDriver_Command::METHOD_GET);
-            $value = $result['value'];
-            //$this->state['size'] =
-            return ['width' => $value['width'], 'height' => $value['height']];
-        //}
-        //return $this->state['size'];
+        $result = $this->sendCommand('element/:id/size', WebDriver_Command::METHOD_GET);
+        $value = $result['value'];
+        return ['width' => $value['width'], 'height' => $value['height']];
     }
 
 
