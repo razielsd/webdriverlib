@@ -23,9 +23,15 @@ class WebDriver_Object_Timeout extends WebDriver_Object
     }
 
 
+    /**
+     * Set the amount of time the driver should wait when searching for elements.
+     *
+     * @param $time - The amount of time to wait, in milliseconds. This value has a lower bound of 0.
+     * @return mixed
+     */
     public function implicitWait($time)
     {
-        $param = ['ms' => $time];
+        $param = ['ms' => intval($time)];
         $command = $this->driver->factoryCommand('timeouts/implicit_wait', WebDriver_Command::METHOD_POST, $param);
         return $this->driver->curl($command)['value'];
     }

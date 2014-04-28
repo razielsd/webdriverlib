@@ -16,8 +16,9 @@ class WebDriver_Driver
     protected $isDebug = false;
 
 
-    public function __construct($host, $port=4444, $sessionId=null)
+    public function __construct($host, $port=4444, $desiredCapabilities=null, $sessionId=null)
     {
+        $this->desiredCapabilities = empty($desiredCapabilities)?$this->desiredCapabilities:$desiredCapabilities;
         $this->host = $host;
         $this->port = $port;
         $this->serverUrl = 'http://' . $this->host . ':' . $this->port . '/wd/hub/';

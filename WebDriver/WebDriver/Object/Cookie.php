@@ -30,13 +30,13 @@ class WebDriver_Object_Cookie extends WebDriver_Object
      * @param $name
      * @param $value
      */
-    public function set($name, $value)
+    public function set($name, $value, $secure=false)
     {
         $params = ['cookie' =>
             [
-            'name' => $name,
-            'value' => "{$value}",
-            'secure' => false
+                'name' => $name,
+                'value' => "{$value}",
+                'secure' => $secure,
             ]
         ];
         $command = $this->driver->factoryCommand('cookie', WebDriver_Command::METHOD_POST, $params);

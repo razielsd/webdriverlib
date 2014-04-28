@@ -47,12 +47,13 @@ class WebDriver
      * @param int $port
      * @param string $sessionId - use active session,
      */
-    public function __construct($host, $port=4444, $sessionId=null)
+    public function __construct($host, $port=4444, $desiredCapabilities=null, $sessionId=null)
     {
         $this->host = $host;
         $this->port = $port;
         $this->sessionId = $sessionId;
-        $this->driver = new WebDriver_Driver($this->host, $this->port, $this->sessionId);
+        $desiredCapabilities = (empty($desiredCapabilities))?$this->desiredCapabilities:$desiredCapabilities;
+        $this->driver = new WebDriver_Driver($this->host, $this->port, $desiredCapabilities, $this->sessionId);
     }
 
 
@@ -168,7 +169,7 @@ class WebDriver
         $result = $this->driver->curl(
             $this->driver->factoryCommand('execute', WebDriver_Command::METHOD_POST, $params)
         );
-        return $result['value'];
+        return isset($result['value'])?$result['value']:false;
     }
 
 

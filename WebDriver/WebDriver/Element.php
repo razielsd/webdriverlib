@@ -10,6 +10,7 @@ class WebDriver_Element
     protected $locator = null;
     protected $elementId = null;
     protected $parentId = null;
+    protected $waitTimeout = 30;
     /**
      * @var WebDriver
      */
@@ -48,7 +49,7 @@ class WebDriver_Element
             $param = $this->parseLocator($this->locator);
             $command = 'element';
             if ($this->parentId !== null) {
-                $command = sprintf('element/%d/element', $this->parentId);
+                $command = sprintf('element/:id/element', $this->parentId);
             }
 
             $command = $this->driver->factoryCommand($command, WebDriver_Command::METHOD_POST, $param);
@@ -59,6 +60,15 @@ class WebDriver_Element
             $this->elementId = (int)$result['value']['ELEMENT'];
         }
         return $this->elementId;
+    }
+
+
+    /**
+     * Refresh element data
+     */
+    public function refresh()
+    {
+        $this->elementId = null;
     }
 
 
@@ -88,19 +98,29 @@ class WebDriver_Element
     }
 
 
-    protected function sendCommand($command, $method, $params=array())
+    protected function sendCommand($command, $method, $params=array(), $errorMessage='')
     {
-        $command = $this->driver->factoryCommand($command, $method, $params)
-            ->param(['id' => $this->getElementId()]);
-        return $this->driver->curl($command);
+        try {
+            $command = $this->driver->factoryCommand($command, $method, $params)
+                ->param(['id' => $this->getElementId()]);
+            return $this->driver->curl($command);
+        }catch (Exception $e) {
+            if (!empty($errorMessage)) {
+                $refObject   = new ReflectionObject($e);
+                $refProperty = $refObject->getProperty('message');
+                $refProperty->setAccessible(true);
+                $refProperty->setValue($e, $errorMessage . "\n" . $e->getMessage());
+            }
+            throw $e;
+        }
     }
 
     /**
      * @return WebDriver_Element
      */
-    public function click()
+    public function click($errorMessage='')
     {
-        $r = $this->sendCommand('element/:id/click', WebDriver_Command::METHOD_POST);
+        $this->sendCommand('element/:id/click', WebDriver_Command::METHOD_POST, [], $errorMessage);
         return $this;
     }
 
@@ -199,6 +219,7 @@ class WebDriver_Element
             switch ($tagName) {
                 case 'input':
                 case 'textarea':
+                    $this->clear();
                     $params = ['value' => ["{$value}"]];
                     $this->sendCommand('element/:id/value', WebDriver_Command::METHOD_POST, $params);
                     break;
@@ -331,6 +352,9 @@ class WebDriver_Element
 
     public function isDisplayed()
     {
+        if (!$this->isPresent()) {
+            return false;
+        }
         $result = $this->sendCommand('element/:id/displayed', WebDriver_Command::METHOD_GET);
         return (bool)$result['value'];
     }
@@ -347,10 +371,15 @@ class WebDriver_Element
         return $this;
     }
 
+    public function timeout($timeout=30)
+    {
+        $this->waitTimeout = $timeout;
+        return $this;
+    }
 
     public function waitDisplayed()
     {
-        for ($i=0;$i<30;$i++) {
+        for ($i=0;$i<$this->waitTimeout;$i++) {
             if ($this->isDisplayed()) {
                 return $this;
             }
