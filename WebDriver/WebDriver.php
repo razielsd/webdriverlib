@@ -8,6 +8,7 @@ require_once __DIR__ . '/WebDriver/Object.php';
 require_once __DIR__ . '/WebDriver/Object/Alert.php';
 require_once __DIR__ . '/WebDriver/Object/Timeout.php';
 require_once __DIR__ . '/WebDriver/Object/Cookie.php';
+require_once __DIR__ . '/WebDriver/Object/Window.php';
 require_once __DIR__ . '/WebDriver/Element.php';
 
 
@@ -96,6 +97,18 @@ class WebDriver
             $this->objectList['cookie'] = new WebDriver_Object_Cookie($this->driver);
         }
         return $this->objectList['cookie'];
+    }
+
+
+    /**
+     * @return WebDriver_Object_Window
+     */
+    public function window()
+    {
+        if (!isset($this->objectList['window'])) {
+            $this->objectList['window'] = new WebDriver_Object_Window($this->driver);
+        }
+        return $this->objectList['window'];
     }
 
 

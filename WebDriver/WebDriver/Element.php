@@ -10,7 +10,8 @@ class WebDriver_Element
     protected $locator = null;
     protected $elementId = null;
     protected $parentId = null;
-    protected $waitTimeout = 30;
+    protected $presentTimeout = 1000;
+    protected $waitTimeout = 30000;
     /**
      * @var WebDriver
      */
@@ -342,9 +343,12 @@ class WebDriver_Element
     public function isPresent()
     {
         try {
+            $this->webDriver->timeout()->implicitWait($this->presentTimeout);
             $this->getElementId();
+            $this->webDriver->timeout()->implicitWait($this->waitTimeout);
             return true;
         } catch (Exception $e) {
+            $this->webDriver->timeout()->implicitWait($this->waitTimeout);
             return false;
         }
     }
@@ -360,9 +364,11 @@ class WebDriver_Element
     }
 
 
-    public function waitPresent()
+    public function waitPresent($timeout=null)
     {
         try {
+            $timeout = $timeout?$timeout:$this->waitTimeout;
+            $this->webDriver->timeout()->implicitWait($timeout);
             $this->getElementId();
             return $this;
         } catch (WebDriver_Exception $e) {
