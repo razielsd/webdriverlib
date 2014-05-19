@@ -50,7 +50,7 @@ class WebDriver_Element
             $param = $this->parseLocator($this->locator);
             $command = 'element';
             if ($this->parentId !== null) {
-                $command = sprintf('element/:id/element', $this->parentId);
+                $command = sprintf('element/%d/element', $this->parentId);
             }
 
             $command = $this->driver->factoryCommand($command, WebDriver_Command::METHOD_POST, $param);
