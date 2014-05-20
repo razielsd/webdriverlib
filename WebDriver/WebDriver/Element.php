@@ -314,10 +314,24 @@ class WebDriver_Element
     }
 
 
+    /**
+     * @return bool
+     */
     public function enabled()
     {
         $result = $this->sendCommand('element/:id/enabled', WebDriver_Command::METHOD_GET);
         return (bool)$result['value'];
+    }
+
+
+    /**
+     * Get state for checkbox elements
+     *
+     * @return bool
+     */
+    public function checked()
+    {
+        return ('true' == $this->attribute('checked'));
     }
 
 
