@@ -164,7 +164,7 @@ class WebDriver
     public function refresh()
     {
         $this->driver->curl(
-            $this->driver->factoryCommand('forward', WebDriver_Command::METHOD_POST)
+            $this->driver->factoryCommand('refresh', WebDriver_Command::METHOD_POST)
         );
     }
 
