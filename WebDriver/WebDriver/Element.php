@@ -16,6 +16,7 @@ class WebDriver_Element
      * @var WebDriver
      */
     protected $webDriver = null;
+    protected $description = null;
 
 
     /**
@@ -34,7 +35,6 @@ class WebDriver_Element
         $this->driver = $webDriver->getDriver();
         $this->locator = $locator;
         $this->parentId = $parentId;
-
     }
 
 
@@ -62,6 +62,35 @@ class WebDriver_Element
         }
         return $this->elementId;
     }
+
+
+    /**
+     * Use for set/get info about element in your application
+     *
+     * @param string|null $descr
+     * @return WebDriver_Element|string
+     */
+    public function description($descr=null)
+    {
+        if ($descr === null) {
+            return $this->description;
+        } else {
+            $this->description = $descr;
+            return $this;
+        }
+    }
+
+
+    /**
+     * Get element locator used for __constructor
+     *
+     * @return string
+     */
+    public function getLocator()
+    {
+        return $this->locator;
+    }
+
 
 
     /**
@@ -211,6 +240,7 @@ class WebDriver_Element
      * Set element value
      *
      * @param $value
+     * 
      * @return WebDriver_Element|string
      */
     public function value($value=null)
