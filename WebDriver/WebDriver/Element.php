@@ -240,7 +240,7 @@ class WebDriver_Element
      * Set element value
      *
      * @param $value
-     * 
+     *
      * @return WebDriver_Element|string
      */
     public function value($value=null)
@@ -250,7 +250,9 @@ class WebDriver_Element
             switch ($tagName) {
                 case 'input':
                 case 'textarea':
-                    $this->clear();
+                    if (strtolower($this->attribute('type')) != 'file') {
+                        $this->clear();
+                    }
                     $params = ['value' => ["{$value}"]];
                     $this->sendCommand('element/:id/value', WebDriver_Command::METHOD_POST, $params);
                     break;
@@ -282,6 +284,9 @@ class WebDriver_Element
                     break;
                 default:
                     $value = $this->text();
+                    if ($this->webDriver->config()->get(WebDriver_Config::TRIM_TEXT_NODE_VALUE)) {
+                        $value = trim($value);
+                    }
             }
             return $value;
         }

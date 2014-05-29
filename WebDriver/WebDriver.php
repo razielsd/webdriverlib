@@ -1,5 +1,6 @@
 <?php
 
+require_once __DIR__ . '/WebDriver/Config.php';
 require_once __DIR__ . '/WebDriver/Driver.php';
 require_once __DIR__ . '/WebDriver/Command.php';
 require_once __DIR__ . '/WebDriver/Exception.php';
@@ -34,6 +35,10 @@ class WebDriver
     protected $seleniumServerRequestsTimeout=30;
 
     protected $objectList = array();
+    /**
+     * @var WebDriver_Config
+     */
+    protected $config = null;
 
 
     protected $desiredCapabilities = array(
@@ -50,6 +55,7 @@ class WebDriver
      */
     public function __construct($host, $port=4444, $desiredCapabilities=null, $sessionId=null)
     {
+        $this->config = new WebDriver_Config();
         $this->host = $host;
         $this->port = $port;
         $this->sessionId = $sessionId;
@@ -61,6 +67,15 @@ class WebDriver
     public function getDriver()
     {
         return $this->driver;
+    }
+
+
+    /**
+     * @return WebDriver_Config
+     */
+    public function config()
+    {
+        return $this->config;
     }
 
 
