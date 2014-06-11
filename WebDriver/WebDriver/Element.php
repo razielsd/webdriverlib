@@ -54,7 +54,13 @@ class WebDriver_Element
             }
 
             $command = $this->driver->factoryCommand($command, WebDriver_Command::METHOD_POST, $param);
-            $result = $this->driver->curl($command);
+            try {
+                $result = $this->driver->curl($command);
+            } catch (WebDriver_Exception $e) {
+                throw new WebDriver_Exception (
+                    "Element not found: " . $this->locator . ' with error: ' . $e->getMessage()
+                );
+            }
             if (!isset($result['value']['ELEMENT'])) {
                 throw new WebDriver_Exception ("Element not found: " . $this->locator);
             }
