@@ -105,6 +105,7 @@ class WebDriver_Element
     public function refresh()
     {
         $this->elementId = null;
+        return $this;
     }
 
 
@@ -419,7 +420,7 @@ class WebDriver_Element
     }
 
 
-    public function waitPresent($timeout=null)
+    public function waitPresent($timeout = null, $message = null)
     {
         try {
             $timeout = $timeout?$timeout:$this->waitTimeout;
@@ -427,7 +428,12 @@ class WebDriver_Element
             $this->getElementId();
             return $this;
         } catch (WebDriver_Exception $e) {
-            throw $e;
+            if ($message == null) {
+                throw $e;
+            } else {
+                throw
+                    new WebDriver_Exception ('Element not found: ' . $this->getLocator() . ' with error: ' . $message);
+            }
         }
         return $this;
     }
