@@ -131,7 +131,7 @@ class WebDriver_Element
         if (!isset($strategyList[$strategy])) {
             throw new WebDriver_Exception ("Unknown locator strategy {$strategy} for locator: " . $locator);
         }
-        return ['using' => $strategy, 'value' => $info[1]];
+        return ['using' => $strategyList[$strategy], 'value' => $info[1]];
     }
 
 
@@ -142,6 +142,10 @@ class WebDriver_Element
                 ->param(['id' => $this->getElementId()]);
             return $this->driver->curl($command);
         }catch (Exception $e) {
+            if (!($e instanceof WebDriver_Exception)) {
+                $errorMessage = empty($errorMessage)?'':"\n";
+                $errorMessage .= 'Locator: ' . $this->getLocator();
+            }
             if (!empty($errorMessage)) {
                 $refObject   = new ReflectionObject($e);
                 $refProperty = $refObject->getProperty('message');
