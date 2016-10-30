@@ -13,7 +13,7 @@ class WebDriver_Command
     protected $serverUrl = null;
 
 
-    public function __construct($command, $method, $params=array())
+    public function __construct($command, $method, $params = array())
     {
         $this->command = $command;
         $this->method = $method;
@@ -28,7 +28,8 @@ class WebDriver_Command
     }
 
 
-    public function param($params) {
+    public function param($params)
+    {
         foreach ($params as $search => $replace) {
             $this->command = str_replace(':' . $search, $replace, $this->command);
         }
@@ -54,6 +55,12 @@ class WebDriver_Command
     }
 
 
+    public function getCommandName()
+    {
+        return $this->command;
+    }
+
+
     public function getMethod()
     {
         return $this->method;
@@ -63,5 +70,13 @@ class WebDriver_Command
     public function getParameters()
     {
         return $this->params;
+    }
+
+
+    public function __toString()
+    {
+        $str = '[' . $this->getMethod() . ']' . $this->getCommandName() . '(' .
+            json_encode($this->getParameters()) . ')';
+        return $str;
     }
 }

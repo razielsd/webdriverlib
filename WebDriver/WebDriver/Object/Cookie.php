@@ -3,22 +3,39 @@ class WebDriver_Object_Cookie extends WebDriver_Object
 {
 
     /**
-     * Retrieve all cookies visible to the current page.
+     * Retrieve one cookie visible to the current page.
      */
-    public function get($name=null)
+    public function get($name)
     {
         $command = $this->driver->factoryCommand('cookie', WebDriver_Command::METHOD_GET);
         $value = $this->driver->curl($command)['value'];
-        if ($name) {
-            $search = array_filter(
-                $value,
-                function($item) use($name) {
-                    return ($item['name'] == $name);
-            });
-            $search = array_values($search);
-            $value = empty($search)?null:$search[0];
+        $search = array_filter(
+            $value,
+            function ($item) use ($name) {
+                return ($item['name'] == $name);
+            }
+        );
+        $search = array_values($search);
+        $value = empty($search)?null:$search[0];
+        if ($value) {
+            $value = new WebDriver_Object_Cookie_CookieInfo($value);
         }
         return $value;
+    }
+
+
+    /**
+     * Retrieve all cookies visible to the current page.
+     */
+    public function getAll()
+    {
+        $command = $this->driver->factoryCommand('cookie', WebDriver_Command::METHOD_GET);
+        $all = $this->driver->curl($command)['value'];
+        $result = [];
+        foreach ($all as $value) {
+            $result[$value['value']] = new WebDriver_Object_Cookie_CookieInfo($value);
+        }
+        return $result;
     }
 
 

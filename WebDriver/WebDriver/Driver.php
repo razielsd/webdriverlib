@@ -1,28 +1,73 @@
 <?php
+
 class WebDriver_Driver
 {
-    protected $host = '127.0.0.1';
-    protected $port = 4444;
-    protected $seleniumServerRequestsTimeout=60;
 
+    protected $host = null;
 
-    protected $desiredCapabilities = array(
-        'browserName' => 'firefox'
-    );
+    protected $port = null;
+
+    protected $requestTimeout = 60;
+
+    protected $sessionRequestTimeout = 60;
+
+    protected $desiredCapabilities = [
+        'browserName' => 'firefox',
+    ];
 
     protected $sessionId = null;
+
     protected $serverUrl = null;
-    protected $isCloseSession = true;
+
+    protected $isCloseSession = false;
+
     protected $isDebug = false;
 
 
-    public function __construct($host, $port=4444, $desiredCapabilities=null, $sessionId=null)
+    protected function __construct($host, $port = 4444, $desiredCapabilities = [])
     {
-        $this->desiredCapabilities = empty($desiredCapabilities)?$this->desiredCapabilities:$desiredCapabilities;
+        $this->desiredCapabilities = empty($desiredCapabilities) ? $this->desiredCapabilities : $desiredCapabilities;
         $this->host = $host;
         $this->port = $port;
-        $this->serverUrl = 'http://' . $this->host . ':' . $this->port . '/wd/hub/';
-        if (!$sessionId) {
+        $this->serverUrl = "http://{$this->host}:{$this->port}/wd/hub/";
+    }
+
+
+    public static function factory($host, $port = 4444, $desiredCapabilities = null)
+    {
+        return new static($host, $port, $desiredCapabilities);
+    }
+
+
+    public function clearDesiredCapabilities()
+    {
+        $this->desiredCapabilities = [];
+        return $this;
+    }
+
+
+    public function setDesiredCapability($key, $value = null)
+    {
+        /** @var WebDriver_Capabilities $capabilities */
+        $capabilities = $key;
+        if ($capabilities instanceof WebDriver_Capabilities) {
+            $this->desiredCapabilities = $capabilities->asArray();
+            return $this;
+        }
+        if (null === $value) {
+            unset($this->desiredCapabilities[$key]);
+        } else {
+            $this->desiredCapabilities[$key] = $value;
+        }
+        return $this;
+    }
+
+
+    public function connect($sessionId = null)
+    {
+        if (null === $sessionId) {
+            $defaultTimeout = $this->requestTimeout;
+            $this->requestTimeout = $this->sessionRequestTimeout;
             $result = $this->curl(
                 $this->factoryCommand(
                     'session',
@@ -31,26 +76,85 @@ class WebDriver_Driver
                 )
             );
             $sessionId = $result['sessionId'];
-        } else {
-            $this->isCloseSession = false;
+            $this->requestTimeout = $defaultTimeout;
+            $this->isCloseSession = true;
         }
         $this->sessionId = $sessionId;
+        return $this;
+    }
+
+
+    /**
+     * Возвращает список сессий.
+     * @return array
+     */
+    public function getSessionList()
+    {
+        $result = $this->curl(
+            $this->factoryCommand(
+                "sessions",
+                \WebDriver_Command::METHOD_GET
+            )
+        );
+        return (array) $result['value'];
+    }
+
+
+    /**
+     * Удаляет сессию по идентификатору.
+     * @param string $sessionId
+     * @return $this
+     */
+    public function deleteSession(string $sessionId)
+    {
+        $this->curl(
+            $this->factoryCommand(
+                "session/{$sessionId}",
+                \WebDriver_Command::METHOD_DELETE
+            )
+        );
+        return $this;
+    }
+
+
+    public function setRequestTimeout($timeout)
+    {
+        $this->requestTimeout = $timeout;
+        return $this;
+    }
+
+
+    public function setSessionRequestTimeout($timeout)
+    {
+        $this->sessionRequestTimeout = $timeout;
+        return $this;
     }
 
 
     public function __destruct()
     {
-        if ($this->sessionId && $this->isCloseSession) {
+        $this->close();
+    }
+
+
+    public function close()
+    {
+        if (!empty($this->sessionId) && $this->isCloseSession) {
             $command = $this->factoryCommand(
                 'session/' . $this->sessionId,
                 WebDriver_Command::METHOD_DELETE
             )->withoutSession();
-            $this->curl($command);
+            try {
+                $this->curl($command);
+            } finally {
+                $this->sessionId = null;
+            }
         }
+        return $this;
     }
 
 
-    public function factoryCommand($command, $method, $params=array())
+    public function factoryCommand($command, $method, $params = array())
     {
         $command = new WebDriver_Command($command, $method, $params);
         $command->addSession($this->serverUrl, $this->sessionId);
@@ -63,109 +167,117 @@ class WebDriver_Driver
         $url = $command->getUrl();
         $this->writeLog('URL: ' . $url);
         $ch = curl_init($url);
-        curl_setopt($ch, CURLOPT_TIMEOUT, $this->seleniumServerRequestsTimeout);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, TRUE);
-        curl_setopt($ch,
+        curl_setopt($ch, CURLOPT_TIMEOUT, $this->requestTimeout);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt(
+            $ch,
             CURLOPT_HTTPHEADER,
             array(
                 'Content-type: application/json;charset=UTF-8',
                 'Accept: application/json;charset=UTF-8'
-            ));
+            )
+        );
 
         $method = $command->getMethod();
         $this->writeLog('Request method: ' . $method);
         $params = $command->getParameters();
         $this->writeLog('Params: ' . var_export($params, true));
         if ($method === WebDriver_Command::METHOD_POST) {
-            curl_setopt($ch, CURLOPT_POST, TRUE);
+            curl_setopt($ch, CURLOPT_POST, true);
             if ($params && is_array($params)) {
                 curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($params));
             }
-            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, TRUE);
-        } else if ($method === WebDriver_Command::METHOD_DELETE) {
-            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');        }
-
+            curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
+        } elseif ($method === WebDriver_Command::METHOD_DELETE) {
+            curl_setopt($ch, CURLOPT_CUSTOMREQUEST, 'DELETE');
+        }
         $rawResponse = trim(curl_exec($ch));
-
         if (curl_errno($ch)) {
             throw new WebDriver_NoSeleniumException(
-                'Error connection[' . curl_errno($ch) .'] to ' .
+                'Error connection[' . curl_errno($ch) . '] to ' .
                 $url  . ': ' . curl_error($ch)
             );
         }
         $info = curl_getinfo($ch);
-        if ($info['http_code'] == 0) {
-            throw new WebDriver_NoSeleniumException('No response or broken');
-        }
-        if ($info['http_code'] == 404) {
-            throw new WebDriver_Exception("The command $url is not recognized by the server.");
-        }
         curl_close($ch);
-        $content = json_decode($rawResponse, TRUE);
-        if ($info['http_code'] == 500) {
-            if (isset($content['value']['message'])) {
-                $message = $content['value']['message'];
-            } else {
-                $message = "Internal server error while executing $method request at $url. Response: " . var_export($content, TRUE);
-            }
-            throw new WebDriver_Exception($message);
-        }
-        $json = json_decode($rawResponse, true);
-
-        if (is_array($json) && array_key_exists('status', $json)) {
-            $this->checkResponse($json);
-        }
-        return $json;
+        return $this->parseResponse($rawResponse, $info, $command);
     }
 
 
-    protected function checkResponse($json)
+    /**
+     * Returns parsed response.
+     *
+     * @param string $rawResponse
+     * @param array $infoList
+     * @param WebDriver_Command $command
+     * @throws WebDriver_Exception
+     * @throws WebDriver_NoSeleniumException
+     * @return array
+     */
+    protected function parseResponse($rawResponse, $infoList, $command)
     {
-        $status = $json['status'];
-
-        $statusList = [
-            //0 => 'The command executed successfully.',
-            6 => 'A session is either terminated or not started',
-            7 => 'NoSuchElement - An element could not be located on the page using the given search parameters.',
-            8 => 'NoSuchFrame - A request to switch to a frame could not be satisfied because the frame could not be found.',
-            9 => 'UnknownCommand - The requested resource could not be found, or a request was received using an HTTP method that is not supported by the mapped resource.',
-            10 => 'StaleElementReference - An element command failed because the referenced element is no longer attached to the DOM.',
-            11 => 'ElementNotVisible - An element command could not be completed because the element is not visible on the page.',
-            12 => 'InvalidElementState - An element command could not be completed because the element is in an invalid state (e.g. attempting to click a disabled element).',
-            13 => 'UnknownError - An unknown server-side error occurred while processing the command.',
-            15 => 'ElementIsNotSelectable - An attempt was made to select an element that cannot be selected.',
-            17 => 'JavaScriptError - An error occurred while executing user supplied JavaScript.',
-            19 => 'XPathLookupError - An error occurred while searching for an element by XPath.',
-            21 => 'Timeout - An operation did not complete before its timeout expired.',
-            23 => 'NoSuchWindow - A request to switch to a different window could not be satisfied because the window could not be found.',
-            24 => 'InvalidCookieDomain - An illegal attempt was made to set a cookie under a different domain than the current page.',
-            25 => 'UnableToSetCookie - A request to set a cookie\'s value could not be satisfied.',
-            26 => 'UnexpectedAlertOpen - A modal dialog was open, blocking this operation',
-            27 => 'NoAlertOpenError - An attempt was made to operate on a modal dialog when one was not open.',
-            28 => 'ScriptTimeout - A script did not complete before its timeout expired.',
-            29 => 'InvalidElementCoordinates - The coordinates provided to an interactions operation are invalid.',
-            30 => 'IMENotAvailable - IME was not available.',
-            31 => 'IMEEngineActivationFailed - An IME engine could not be started.',
-            32 => 'InvalidSelector - Argument was an invalid selector (e.g. XPath/CSS).',
-            33 => 'SessionNotCreatedException - A new session could not be created.',
-            34 => 'MoveTargetOutOfBounds - Target provided for a move action is out of bounds. ',
+        $httpStatusCode = isset($infoList['http_code']) ? $infoList['http_code'] : 0;
+        $messageList = [
+            "HTTP Response Status Code: {$httpStatusCode}",
+            WebDriver_Exception_Protocol::getCommandDescription($command)
         ];
-
-        if ($status != 0) {
-            $errorMessage = 'Unknown error status: ' . $status;
-            $errorMessage = (isset($statusList[$status]))?$statusList[$status]:$errorMessage;
-            throw new WebDriver_Exception($errorMessage, $status);
+        switch ($httpStatusCode) {
+            case 0:
+                $message = $this->buildResponseErrorMessage("No response or broken.", $messageList);
+                throw new WebDriver_NoSeleniumException($message);
+            case WebDriver_Http::SUCCESS_OK:
+                $decodedJsonList = json_decode($rawResponse, true);
+                if ($decodedJsonList === null) {
+                    $errorList = ["Can't decode response JSON:", json_last_error_msg()];
+                    $message = $this->buildResponseErrorMessage($errorList, $messageList);
+                    throw new WebDriver_Exception_Protocol($message);
+                }
+                if (isset($decodedJsonList['status']) &&
+                    !WebDriver_Exception_FailedCommand::isOk($decodedJsonList['status'])) {
+                    throw WebDriver_Exception_FailedCommand::factory(
+                        $command,
+                        $infoList,
+                        $rawResponse,
+                        $decodedJsonList
+                    );
+                }
+                return $decodedJsonList;
+            default:
+                if (WebDriver_Http::isError($httpStatusCode)) {
+                    throw WebDriver_Exception_Protocol::factory($command, $infoList, $rawResponse);
+                }
+                $errorMessage = "Unexpected HTTP status code: {$httpStatusCode}";
+                $message = $this->buildResponseErrorMessage($errorMessage, $messageList);
+                throw new WebDriver_Exception($message);
         }
+    }
+
+
+    /**
+     * Returns error message.
+     *
+     * @param string|array $errorMessageList
+     * @param string|array $dataList
+     * @return string
+     */
+    protected function buildResponseErrorMessage($errorMessageList, array $dataList)
+    {
+        return implode("\n", array_merge((array) $errorMessageList, $dataList));
     }
 
 
     protected function writeLog($logTxt)
     {
         if ($this->isDebug) {
-            echo "{$logTxt}\n";
+            //echo "{$logTxt}\n";
+            error_log($logTxt);
         }
 
     }
 
 
+    public function status()
+    {
+        return $this->curl($this->factoryCommand('status', WebDriver_Command::METHOD_GET));
+    }
 }

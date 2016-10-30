@@ -4,11 +4,10 @@
  * Modify Web_DriverTest::setUpBeforeClass
  */
 
-require_once (__DIR__ . '/../../WebDriver/WebDriver.php');
-
 date_default_timezone_set('Europe/Moscow');
 
-class Web_DriverTest extends PHPUnit_Framework_TestCase
+
+class Web_DriverTest extends Testing_TestCase
 {
 
     /**
@@ -19,7 +18,7 @@ class Web_DriverTest extends PHPUnit_Framework_TestCase
      * Url for test page in tests/www/webdrivertest.html
      * @var string
      */
-    protected static $testUrl = 'http://images.dev/webdrivertest.html';
+    protected static $testUrl = 'http://images.dev/webdrivertest.html';//'http://devtest.ru/tmp/webdrivertest.html';
 
     protected $backupStaticAttributesBlacklist = array(
         'Web_DriverTest' => array('driver')
@@ -30,7 +29,9 @@ class Web_DriverTest extends PHPUnit_Framework_TestCase
     {
         parent::setUpBeforeClass();
         //selenium host
-        self::$driver = new WebDriver('192.168.56.103', 4444);
+        //self::$driver = new WebDriver('192.168.56.103', 4444);
+        //self::$driver = new WebDriver('10.7.177.245', 4444);
+        self::$driver = new WebDriver('localhost', 4444);
         self::$driver->url(self::$testUrl);
     }
 
@@ -60,6 +61,16 @@ class Web_DriverTest extends PHPUnit_Framework_TestCase
             1,
             self::$driver->find('id=e_button')->click()->value(),
             "Error on test mouse click"
+        );
+    }
+
+
+    public function testTitle()
+    {
+        $this->assertEquals(
+            'WebDriverTest',
+            self::$driver->title(),
+            'Bad page title'
         );
     }
 
@@ -190,6 +201,24 @@ class Web_DriverTest extends PHPUnit_Framework_TestCase
     }
 
 
+    public function testPresent()
+    {
+        $this->assertFalse(
+            self::$driver->find('id=NO_SUCH_ELEMENT')->isPresent(),
+            'Element id=NO_SUCH_ELEMENT must be NOT present'
+        );
+        $this->assertTrue(
+            self::$driver->find('id=el_hidden')->isPresent(),
+            'Element id=el_hidden must be present'
+        );
+        $this->assertTrue(
+            self::$driver->find('id=el_enabled')->isPresent(),
+            'Element id=el_enabled must be present'
+        );
+    }
+
+
+
     public function testDisplayed()
     {
         $this->assertFalse(
@@ -201,4 +230,120 @@ class Web_DriverTest extends PHPUnit_Framework_TestCase
             'Element id=el_enabled must be displayed'
         );
     }
+
+    /** Alert tests */
+
+
+    public function testAlertText()
+    {
+        $expectedText = 'Alert Message Text/Текст сообщения';
+        self::$driver->execute("alert('{$expectedText}');");
+        $this->assertEquals(
+            $expectedText,
+            self::$driver->alert()->text(),
+            "Alert message not equals"
+        );
+        self::$driver->alert()->accept();
+    }
+
+
+    public function testAlertPrompt()
+    {
+        $expectedText = 'Alert Message Text/Текст сообщения ' . mt_rand(100, 999);
+        $button = self::$driver->find('id=promt_button')->click();
+        self::$driver->alert()->write($expectedText);
+        $this->assertEquals(
+            $expectedText,
+            $button->value(),
+            "Не верный введенный текст через javascript::prompt"
+        );
+    }
+
+
+    public function testAlertDismiss()
+    {
+        $expectedText = '11 Alert Message Text/Текст сообщения ZZ1';
+        $button = self::$driver->find('id=promt_button');
+        $beforeText = $button->value();
+        $button->click();
+        self::$driver->alert()->write($expectedText, false);
+        self::$driver->alert()->dismiss();
+        $this->assertEquals(
+            $beforeText,
+            $button->value(),
+            "Введенный текст через javascript::prompt не должен был сохраниться"
+        );
+    }
+
+
+    /** Cookie tests */
+    public function testCookie()
+    {
+        self::$driver->cookie()->set('test', 'test01');
+        $all = self::$driver->cookie()->get();
+        //var_dump($all);
+        $one = self::$driver->cookie()->get('test');
+        //var_dump($one);
+        self::$driver->cookie()->delete('test');
+        self::$driver->cookie()->clearAll();
+    }
+
+
+    public function testFrameByName()
+    {
+        $this->assertFalse(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Found element in NOT selected frame testframe'
+        );
+        self::$driver->frame()->focus('testframe');
+        $this->assertTrue(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Not found element in selected frame testframe'
+        );
+        self::$driver->frame()->focus();
+        $this->assertFalse(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Found element in NOT selected frame testframe'
+        );
+    }
+
+
+    public function testFrameByElement()
+    {
+        $this->assertFalse(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Found element in NOT selected frame testframe'
+        );
+        self::$driver->frame()->focus(self::$driver->find("xpath=//iframe[@name='testframe']"));
+        $this->assertTrue(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Not found element in selected frame testframe'
+        );
+        self::$driver->frame()->focus();
+        $this->assertFalse(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Found element in NOT selected frame testframe'
+        );
+    }
+
+
+
+    public function testFrameParent()
+    {
+        $this->assertFalse(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Found element in NOT selected frame testframe'
+        );
+        self::$driver->frame()->focus('testframe');
+        $this->assertTrue(
+            self::$driver->find('id=frameTxt')->isPresent(),
+            'Not found element in selected frame testframe'
+        );
+        self::$driver->frame()->parent();
+        $this->assertTrue(
+            self::$driver->find('id=webdriver-test-main')->isPresent(),
+            'Not found element for parent page'
+        );
+    }
+
 }
