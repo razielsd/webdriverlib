@@ -1,8 +1,15 @@
 {
-  "name": "webdriverlib",
+  "name": "webdriverlib/webdriverlib",
+  "type": "library",
   "description": "API for JSON Wire Protocol, support Selenium, Selendroid, Appium",
-  "license": "BSD",
+  "license": "MIT",
+  "keywords": ["selenium","appium", "selendroid"],
   "config": {
     "secure-http": false
-  }
+  },
+"autoload": {
+        "psr-0": {
+            "webdriverlib": "WebDriver"
+        }
+    }
 }
