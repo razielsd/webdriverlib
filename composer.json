@@ -1,0 +1,8 @@
+{
+  "name": "webdriverlib",
+  "description": "API for JSON Wire Protocol, support Selenium, Selendroid, Appium",
+  "license": "BSD",
+  "config": {
+    "secure-http": false
+  }
+}
