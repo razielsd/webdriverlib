@@ -15,10 +15,5 @@
     "classmap": [
       "WebDriver/"
     ]
-  },
-  "extra": {
-    "branch-alias": {
-      "dev-master": "master"
-    }
   }
 }
