@@ -2,7 +2,7 @@
   "name": "razielsd/webdriverlib",
   "description": "API for JSON Wire Protocol, support Selenium, Selendroid, Appium",
   "type": "library",
-  "license": "MIT",
+  "license": "BSD-3",
   "keywords": ["selenium","appium", "selendroid"],
   "minimum-stability": "stable",
   "config": {
