@@ -4,6 +4,7 @@
   "description": "API for JSON Wire Protocol, support Selenium, Selendroid, Appium",
   "license": "MIT",
   "keywords": ["selenium","appium", "selendroid"],
+  "version": "0.1.0",
   "config": {
     "secure-http": false
   },
