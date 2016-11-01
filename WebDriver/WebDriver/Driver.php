@@ -85,6 +85,20 @@ class WebDriver_Driver
 
 
     /**
+     * @return string
+     * @throws WebDriver_Exception
+     */
+    public function getSessionId()
+    {
+        if (!$this->sessionId) {
+            throw new WebDriver_Exception('SessionId not defined');
+        }
+
+        return $this->sessionId;
+    }
+
+
+    /**
      * Возвращает список сессий.
      * @return array
      */
