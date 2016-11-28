@@ -19,6 +19,10 @@ class WebDriver_Wait
 
     protected $defaultTimeout = 30;
 
+    protected $prevTimeout = null;
+
+
+
     /**
      * @var callable|null
      */
@@ -183,9 +187,19 @@ class WebDriver_Wait
     }
 
 
+    protected function setImplicitTimeout($timeout)
+    {
+        $timeoutObj = $this->webDriver->timeout();
+        $this->waitTimeout = $this->webDriver->timeout()->get($timeoutObj::WAIT_IMPLICIT);
+        $this->webDriver->timeout()->implicitWait($timeout);
+        return $this;
+    }
+
+
     protected function restoreImplicitWait()
     {
-        $this->webDriver->timeout()->implicitWait($this->defaultTimeout * 1000);
+        $timeout = $this->prevTimeout ? $this->prevTimeout : ($this->defaultTimeout * 1000);
+        $this->webDriver->timeout()->implicitWait($timeout);
         return $this;
     }
 

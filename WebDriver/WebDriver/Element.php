@@ -20,7 +20,7 @@ class WebDriver_Element
      */
     protected $parent = null;
     protected $presentTimeout = 1;
-    protected $waitTimeout = 30;
+    protected $waitTimeout = 30000;//30 seconds 30 * 1000
     /**
      * @var WebDriver
      */
@@ -483,7 +483,7 @@ class WebDriver_Element
     {
         $result = true;
         try {
-            $this->webDriver->timeout()->implicitWait($this->presentTimeout * 1000);
+            $this->setImplicitTimeout($this->presentTimeout * 1000);
             $this->getElementId();
         } catch (WebDriver_UtilException $e) {
             throw $e;
@@ -497,13 +497,6 @@ class WebDriver_Element
     }
 
 
-    protected function restoreImplicitWait()
-    {
-        $this->webDriver->timeout()->implicitWait($this->waitTimeout * 1000);
-        return $this;
-    }
-
-
     public function isDisplayed()
     {
         if (!$this->isPresent()) {
@@ -511,7 +504,7 @@ class WebDriver_Element
         }
         try {
             // Presence is already checked, so we need just minimal timeout to check visibility.
-            $this->webDriver->timeout()->implicitWait(1);
+            $this->setImplicitTimeout(1);
             $result = $this->sendCommand('element/:id/displayed', WebDriver_Command::METHOD_GET);
         } finally {
             $this->restoreImplicitWait();
@@ -525,7 +518,7 @@ class WebDriver_Element
         $exception = null;
         $timeout = $timeout ? $timeout : $this->waitTimeout;
         try {
-            $this->webDriver->timeout()->implicitWait(1000 * $timeout);
+            $this->setImplicitTimeout($timeout);
             $this->getElementId();
         } catch (WebDriver_Exception $exception) {
             if ($message !== null) {
@@ -601,7 +594,8 @@ class WebDriver_Element
         if ($callback === null) {
             return new WebDriver_Wait($this->webDriver, $this);
         }
-        for ($i = 0; $i < $this->waitTimeout; $i++) {
+        $waitTimeout = ceil($this->waitTimeout / 1000);
+        for ($i = 0; $i < $waitTimeout; $i++) {
             if (call_user_func($callback, $this)) {
                 return $this;
             }
@@ -648,6 +642,23 @@ class WebDriver_Element
         }
         $location = $this->location();
         return imagecolorat($image, $x + $location['x'], $y + $location['y']);
+    }
+
+
+    protected function setImplicitTimeout($timeout)
+    {
+        $timeoutObj = $this->webDriver->timeout();
+        $this->waitTimeout = $this->webDriver->timeout()->get($timeoutObj::WAIT_IMPLICIT);
+        $this->webDriver->timeout()->implicitWait($timeout);
+        return $this;
+    }
+
+
+    protected function restoreImplicitWait()
+    {
+
+        $this->webDriver->timeout()->implicitWait($this->waitTimeout);
+        return $this;
     }
 
 
