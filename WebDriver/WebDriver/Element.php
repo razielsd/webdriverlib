@@ -656,7 +656,8 @@ class WebDriver_Element
 
     protected function restoreImplicitWait()
     {
-
+        return $this;
+        //not remove for tests, when success - remove this method
         $this->webDriver->timeout()->implicitWait($this->waitTimeout);
         return $this;
     }

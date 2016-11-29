@@ -41,6 +41,10 @@ class WebDriver_Object_Timeout extends WebDriver_Object
      */
     public function implicitWait($timeout)
     {
+        $timeoutNormalize = intval(ceil($timeout / 100));
+        if ($this->cache[self::WAIT_IMPLICIT] === $timeoutNormalize) {
+            return null;
+        }
         $this->cache[self::WAIT_IMPLICIT] = $timeout;
         $param = ['ms' => intval($timeout)];
         $command = $this->driver->factoryCommand('timeouts/implicit_wait', WebDriver_Command::METHOD_POST, $param);
