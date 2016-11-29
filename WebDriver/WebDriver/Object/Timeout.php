@@ -54,7 +54,7 @@ class WebDriver_Object_Timeout extends WebDriver_Object
 
     public function get($timeoutName)
     {
-        if (!isset($this->cache[$timeoutName])) {
+        if (!array_key_exists($timeoutName, $this->cache)) {
             throw new WebDriver_Exception('Unknown timeout: ' . $timeoutName);
         }
         return $this->cache[$timeoutName];
