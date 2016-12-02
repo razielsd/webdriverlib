@@ -536,9 +536,9 @@ class WebDriver_Element
     }
 
 
-    public function timeout($timeout = 30000) // 30 seconds 30 * 1000
+    public function timeout($timeout = 30)
     {
-        $this->waitTimeout = $timeout;
+        $this->waitTimeout = intval($timeout * 1000);
         return $this;
     }
 
