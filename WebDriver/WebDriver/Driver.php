@@ -33,6 +33,24 @@ class WebDriver_Driver
     }
 
 
+    /**
+     * @return string
+     */
+    public function getHost()
+    {
+        return $this->host;
+    }
+
+
+    /**
+     * @return int
+     */
+    public function getPort()
+    {
+        return $this->port;
+    }
+
+
     public static function factory($host, $port = 4444, $desiredCapabilities = null)
     {
         return new static($host, $port, $desiredCapabilities);
