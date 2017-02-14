@@ -377,14 +377,20 @@ class WebDriver
     /**
      * Returns screenshot of current page as binary string.
      *
+     * @param bool $asBase64 - return base64 data, "as is" from server
+     *
      * @return string;
      */
-    public function screenshotAsImage()
+    public function screenshotAsImage($asBase64 = false)
     {
         $image = $this->getDriver()->curl(
             $this->getDriver()->factoryCommand('screenshot', WebDriver_Command::METHOD_GET)
         );
-        return base64_decode($image['value']);
+        $image = $image['value'];
+        if (!$asBase64) {
+            $image = base64_decode($image);
+        }
+        return $image;
     }
 
 
